@@ -64,8 +64,20 @@ h4 { font: 600 13px var(--sans); margin: 0 0 4px; color: var(--muted); }
 .label-est { font: 600 11px var(--sans); letter-spacing: .05em; text-transform: uppercase; color: var(--accent2); border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; white-space: nowrap; }
 .callout { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin: 20px 0; }
 .callout p { margin: .3em 0; font-size: 17px; }
-.math { font-family: var(--serif); font-style: italic; }
-.eq { text-align: center; font-family: var(--serif); font-size: 19px; margin: 18px 0; overflow-x: auto; }
+.math { font-family: var(--serif); font-style: italic; white-space: nowrap; }
+.math .katex { font-size: 1.05em; }
+.eq { text-align: center; font-family: var(--serif); font-size: 19px; margin: 22px 0; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; overflow-y: hidden; }
+.eq .katex-display { margin: 0; }
+.eq .katex { font-size: 1.12em; }
+.eq .gloss { display: block; margin-top: 6px; font: 13px/1.4 var(--sans); color: var(--muted); }
+.eq .gloss .math { font-style: normal; }
+.eq .gloss .katex { font-size: 1em; }
+.eq-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+@media (max-width: 560px) {
+  .eq { padding: 12px 10px; }
+  .eq .katex { font-size: 1em; }
+  .eq-pair { grid-template-columns: 1fr; }
+}
 table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 16px 0; }
 th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { font-weight: 600; color: var(--muted); }

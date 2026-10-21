@@ -32,6 +32,7 @@ PEARL/
 │   ├── js/demo.js            the interactive meta-test episode
 │   ├── js/figures.js         product-of-Gaussians figure and results charts
 │   ├── js/text.js            result sentences generated from summary.json
+│   ├── js/math.js            typesets the equations with KaTeX (Unicode fallback)
 │   ├── js/settings.js        settings dialog (⌘,)
 │   └── data/                 exported agents and summary.json
 ├── docs/
