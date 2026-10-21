@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PEARL Site Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbf7f0;--card:#fffdf9;--ink:#2b2622;--muted:#7a6f66;--line:#e8dfd3;--accent:#c2410c;--accent2:#0f766e}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1a17;--card:#25221e;--ink:#efe8de;--muted:#a59a8e;--line:#3a352f;--accent:#f97316;--accent2:#2dd4bf}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 Inter,system-ui,sans-serif}
+.label{font:600 12px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);padding:24px 16px 8px;max-width:1100px;margin:0 auto}
+.frame{max-width:1100px;margin:0 auto 40px;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+.serif{font-family:"Source Serif 4",Georgia,serif}
+.demo{background:repeating-linear-gradient(45deg,transparent 0 10px,color-mix(in srgb,var(--line) 50%,transparent) 10px 11px);border:1px solid var(--line);border-radius:10px;display:grid;place-items:center;color:var(--muted);font-size:13px;position:relative}
+.demo svg{width:100%;height:100%}
+.muted{color:var(--muted)} h1,h2{margin:.2em 0}
+/* A */
+.a{padding:48px 16px}.a .col{max-width:680px;margin:0 auto}.a h1{font-size:40px;line-height:1.15;font-weight:600}
+.a .demo{height:300px;margin:28px auto;max-width:900px}.a p{font-size:18px}
+.a .wrap{display:grid;grid-template-columns:1fr 680px 1fr;gap:24px}.a .note{font-size:12px;color:var(--muted);border-left:2px solid var(--accent);padding-left:8px;align-self:start}
+/* B */
+.b{display:grid;grid-template-columns:1fr 1fr;min-height:420px}.b .text{padding:40px 32px}.b .side{border-left:1px solid var(--line);padding:24px;display:flex;flex-direction:column;gap:12px}
+.b .demo{flex:1}.b .steps div{padding:10px 12px;border-radius:8px;margin:6px 0;border:1px solid var(--line)}.b .steps .on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+/* C */
+.c .hero{padding:24px}.c .hero .demo{height:320px}.c .title{display:flex;justify-content:space-between;align-items:end;padding:8px 24px 24px}
+.c .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:0 24px 24px}.c .cards div{border:1px solid var(--line);border-radius:10px;padding:16px}
+.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);margin-right:6px}
+@media (max-width:760px){.a .wrap{grid-template-columns:1fr}.a .note{display:none}.b{grid-template-columns:1fr}.c .cards{grid-template-columns:1fr}.a h1{font-size:30px}}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="pt" viewBox="0 0 400 220"><path d="M60 180 A140 140 0 0 1 340 180" fill="none" stroke="currentColor" stroke-dasharray="3 5" opacity=".5"/>
+<circle cx="250" cy="58" r="18" fill="none" stroke="#c2410c" stroke-width="2"/><g fill="none" stroke-width="2" stroke-linecap="round">
+<path d="M200 180 C190 140 120 120 90 110" stroke="#a8a29e"/><path d="M200 180 C210 140 300 120 320 120" stroke="#a8a29e"/><path d="M200 180 C215 130 240 80 250 60" stroke="#c2410c"/></g>
+<circle cx="200" cy="180" r="5" fill="currentColor"/></symbol></defs></svg>
+
+<div class="label">A · Paper with margin notes (Distill classic)</div>
+<div class="frame a"><div class="wrap"><div></div><div class="col">
+<div class="muted" style="font-size:13px">A from-scratch reimplementation · Rakelly et al., ICML 2019</div>
+<h1 class="serif">Learning to explore by being unsure: PEARL, rebuilt from scratch</h1>
+<p class="serif">An agent dropped into a new task doesn't know what it's for. PEARL keeps a belief over what the task might be, acts on a guess, and narrows the belief with every reward it sees.</p></div>
+<div class="note">Margin notes hold definitions and citations, like Distill.</div></div>
+<div class="demo"><svg style="color:var(--muted)"><use href="#pt"/></svg><span style="position:absolute;bottom:10px">Full-width live demo: click to place a goal</span></div>
+<div class="col"><p class="serif">Body text continues in a 680px column, with interactive figures inline…</p></div></div>
+
+<div class="label">B · Sticky demo with scrolling story</div>
+<div class="frame b"><div class="text"><div class="muted" style="font-size:13px">PEARL, rebuilt</div><h2 class="serif" style="font-size:30px">Watch the belief collapse</h2>
+<p>The text scrolls on the left. Each paragraph drives the demo on the right: prior samples, then the first reward, then the narrowed posterior.</p>
+<div class="steps"><div>1 · Sample a task hypothesis z ~ prior</div><div class="on">2 · Explore; a reward arrives</div><div>3 · Product of Gaussians narrows q(z|c)</div></div></div>
+<div class="side"><div class="demo"><svg style="color:var(--muted)"><use href="#pt"/></svg></div><div class="muted" style="font-size:12px">The demo stays pinned while you read.</div></div></div>
+
+<div class="label">C · Demo-first project page</div>
+<div class="frame c"><div class="hero"><div class="demo"><svg style="color:var(--muted)"><use href="#pt"/></svg><span style="position:absolute;top:10px;left:12px">Hero: live demo first</span></div></div>
+<div class="title"><div><h1 class="serif" style="font-size:34px">PEARL, from scratch</h1><span class="chip">Writeup</span><span class="chip">Experiments</span><span class="chip">Code</span></div><div class="muted" style="font-size:13px">ICML 2019 · reimplementation</div></div>
+<div class="cards"><div><b>The idea</b><p class="muted">Probabilistic context, off-policy training.</p></div><div><b>Results</b><p class="muted">3 task families × 3 seeds.</p></div><div><b>Ablations</b><p class="muted">What each design choice buys.</p></div></div></div>
+</body></html>

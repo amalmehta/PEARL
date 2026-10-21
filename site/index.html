@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PEARL From Scratch</title>
+<meta name="description" content="PEARL (Rakelly et al., ICML 2019) rebuilt from scratch in PyTorch: an interactive explainer, a live in-browser demo, and seeded experiments with the paper's ablations.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>try{const t=JSON.parse(localStorage.getItem("pearl-settings")||"{}").theme;if(t&&t!=="system")document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#"><img src="icon.svg" alt="">PEARL From Scratch</a>
+  <nav><a href="#idea">Idea</a><a href="#maths">Maths</a><a href="#demo">Demo</a><a href="#experiments">Experiments</a><a href="#pitfalls">Pitfalls</a><a href="https://github.com/amalmehta/PEARL">Code</a></nav>
+  <button class="icon-btn" data-open-settings aria-label="Settings (⌘,)" title="Settings (⌘,)">⚙︎ Settings</button>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <div class="kicker">A from-scratch reimplementation of Rakelly, Zhou, Finn, Levine &amp; Quillen, ICML 2019</div>
+    <h1>Learning to explore by being unsure: PEARL, rebuilt from scratch</h1>
+    <p class="lede">An agent dropped into a new task doesn't know what the task is. PEARL keeps a <em>belief</em> about it, acts as if one guess from that belief were true, and narrows the belief with every reward it sees. Because the belief is learned separately from the policy, it can all be trained off-policy, from old data.</p>
+    <div class="byline"><span>Code: PyTorch 2.2.2, no RL libraries</span><span>3 task families · 6 variants · 3 seeds</span><span>Every number on this page is generated from <code>results/summary.json</code></span></div>
+  </section>
+
+  <figure class="wide panel demo" id="demo-hero">
+    <div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Task family">
+          <button data-env="sparse_point" aria-pressed="true">Sparse goal</button>
+          <button data-env="point" aria-pressed="false">Dense goal</button>
+          <button data-env="point_wind" aria-pressed="false">Wind</button>
+        </div>
+        <button class="icon-btn play">Pause</button>
+        <button class="icon-btn again">New task</button>
+      </div>
+      <canvas aria-label="Point robot trajectories"></canvas>
+    </div>
+    <div>
+      <div class="hint"></div>
+      <div class="status"></div>
+      <h4>Belief width: σ of q(z | c) per latent dimension</h4>
+      <div class="bars"></div>
+      <h4 style="margin-top:16px">Return of each trajectory in this episode</h4>
+      <div class="returns"></div>
+      <div class="keys"><span><i style="background:var(--explore)"></i>exploring (z ~ prior)</span><span><i style="background:var(--accent)"></i>z ~ posterior</span><span><i style="background:var(--muted);opacity:.5"></i>thin lines: other samples from the current belief</span></div>
+      <figcaption>The trained policy and encoder run live in your browser from weights exported by <code>pearl/export.py</code>. Each run is one meta-test episode, the same protocol as the evaluation in <code>pearl/trainer.py</code>.</figcaption>
+    </div>
+  </figure>
+
+  <article>
+  <h2 id="idea">The problem: adapting fast without wasting data</h2>
+  <p>Meta-reinforcement learning trains on a <em>distribution</em> of related tasks (reach this goal, run at that speed) so that a new task from the same distribution can be solved from a handful of trajectories. Earlier methods such as MAML and RL² learned <em>on-policy</em>: every gradient step needed fresh data from the current policy, so meta-training cost tens of millions of environment steps.</p>
+  <p>PEARL's claim is that this cost isn't necessary. Its authors report that it is <strong>20–100× more sample-efficient</strong> in meta-training than prior methods, and reaches higher asymptotic performance on their MuJoCo benchmarks.</p>
+  <p class="note"><span class="label-est">reported, not reproduced</span> These are the paper's MuJoCo numbers (arXiv 1903.08254, abstract). This project runs only cheap 2D tasks on a laptop and does not re-measure them.</p>
+
+  <h3>The idea in one paragraph</h3>
+  <p>Treat "which task am I in?" as a hidden variable <span class="math">z</span>. An <em>inference network</em> reads a set of transitions <span class="math">c = {(s, a, r, s′)}</span> and outputs a Gaussian belief <span class="math">q(z | c)</span>. The policy <span class="math">π(a | s, z)</span> and critic <span class="math">Q(s, a, z)</span> are ordinary soft actor-critic (SAC) networks that also get <span class="math">z</span>. At meta-test time the agent starts from the prior, samples a <span class="math">z</span>, commits to it for a whole trajectory, then updates the belief and samples again. That is <em>posterior sampling</em>: it explores coherently, because each trajectory tests one hypothesis.</p>
+  <div class="callout"><p><b>Why is off-policy suddenly possible?</b> The policy and critic can learn from any old data, as long as they're told the right <span class="math">z</span>. Only the encoder's input, the context, needs to look like what the agent will see at test time. So PEARL samples the context from <em>recent</em> data and the RL batch from <em>all</em> data. The experiments below test that choice directly.</p></div>
+
+  <h2 id="maths">The maths, one piece at a time</h2>
+  <h3>1. Every transition casts a Gaussian vote</h3>
+  <p>The encoder <span class="math">f<sub>φ</sub></span> looks at one transition <span class="math">c<sub>n</sub></span> and outputs a mean and a variance: a factor <span class="math">Ψ<sub>φ</sub>(z | c<sub>n</sub>) = N(μ<sub>n</sub>, σ²<sub>n</sub>)</span>. The posterior is the product of these factors:</p>
+  <div class="eq">q<sub>φ</sub>(z | c<sub>1:N</sub>) ∝ ∏<sub>n</sub> Ψ<sub>φ</sub>(z | c<sub>n</sub>)</div>
+  <p>A product of Gaussians is again Gaussian, with a closed form: precisions add, and the mean is the precision-weighted average.</p>
+  <div class="eq">1/σ² = Σ<sub>n</sub> 1/σ²<sub>n</sub>,&nbsp;&nbsp;&nbsp; μ = σ² Σ<sub>n</sub> μ<sub>n</sub>/σ²<sub>n</sub></div>
+  <p class="note">Code: <code>pearl/gaussian.py</code>, 4 lines. A test checks it against brute-force multiplication of densities on a grid.</p>
+  <p>Three consequences follow from that formula. Order doesn't matter (the encoder is <em>permutation-invariant</em>, as it should be, since a set of transitions has no order). More evidence can only narrow the belief. And a transition the encoder finds uninformative can simply output a huge variance and drop out of the vote. Try it:</p>
+  <figure class="panel pog" id="pog">
+    <svg aria-label="Three Gaussian factors and their product"></svg>
+    <div class="readout"></div>
+    <div class="sliders"></div>
+    <figcaption>Coloured curves: one factor per transition. Bold curve: their product, which is the posterior. Untick a factor to drop that transition from the context.</figcaption>
+  </figure>
+
+  <h3>2. The belief is kept honest with a KL bottleneck</h3>
+  <p>Without a constraint, the encoder could pack everything about the context into <span class="math">z</span>, including noise that won't generalise. PEARL adds a variational information bottleneck. It penalises how far the posterior is from a standard normal prior:</p>
+  <div class="eq">L<sub>KL</sub> = β · Σ<sub>tasks</sub> KL( q(z | c) ‖ N(0, I) ),&nbsp;&nbsp; KL = ½ Σ (σ² + μ² − 1 − log σ²)</div>
+  <p>The prior also has a job at test time. It is where exploration starts, because before any data the agent samples <span class="math">z ~ N(0, I)</span>. With β = 0.1 (dense tasks) or 1.0 (sparse), the weights are taken from the authors' configs.</p>
+
+  <h3>3. The encoder learns from the critic, not the policy</h3>
+  <p>What should <span class="math">z</span> encode? Not a reconstruction of the transitions, but whatever helps <em>predict value</em>. The encoder's only learning signal (besides the KL) is the critic's Bellman error, backpropagated through the reparameterised sample <span class="math">z = μ + σ ε</span>:</p>
+  <div class="eq">L<sub>critic</sub> = E [ ( Q(s, a, z) − (r + γ V̄(s′, z̄)) )² ],&nbsp;&nbsp; z ~ q<sub>φ</sub>(z | c)</div>
+  <p>The policy and the value network see <span class="math">z</span> with gradients stopped. A unit test (<code>test_encoder_gets_gradient_from_critic_not_policy</code>) checks this routing, because getting it wrong fails silently: training still runs, it just doesn't meta-learn.</p>
+
+  <h3>4. The whole training loop</h3>
+<pre><code>for each iteration:
+    for 5–10 random training tasks:
+        clear that task's encoder buffer                 # context = recent data only
+        collect trajectories with z ~ prior              # -> both buffers
+        collect trajectories with z ~ posterior          # -> both buffers (or RL buffer only)
+    repeat N times:
+        pick 16 tasks; for each: context c from encoder buffer, RL batch from replay buffer
+        mu, var = product_of_gaussians(encoder(c)); z = mu + sqrt(var) * eps
+        critic loss + KL  -> update Q1, Q2, encoder
+        value loss, policy loss (z detached), soft update of target V</code></pre>
+  <p class="note">This is <code>PEARL.train</code> and <code>PEARL.train_step</code> in <code>pearl/trainer.py</code>, line for line against the authors' <code>rl_algorithm.py</code> and <code>sac.py</code>.</p>
+
+  <h2 id="experiments">Experiments</h2>
+  <h3>Setup</h3>
+  <p>The paper's MuJoCo benchmarks need millions of steps per seed. On a laptop CPU that would take days, so this project uses three cheap 2D task families. Each one isolates a different way that tasks can differ:</p>
+  <table>
+    <tr><th>Family</th><th>What varies</th><th>Source</th></tr>
+    <tr><td>Point-Robot (dense)</td><td>Goal anywhere in [−1, 1]², reward = −distance</td><td>Authors' code (<code>point-robot</code>), not reported in the paper</td></tr>
+    <tr><td>Sparse Point-Robot</td><td>Goal on a half circle; reward only within 0.2 of it</td><td>Paper Fig. 7 (exploration)</td></tr>
+    <tr><td>Point-Wind</td><td>The <em>dynamics</em>: a constant wind pushes the robot; the goal is fixed</td><td><span class="label-est">invented here</span> to test dynamics inference</td></tr>
+  </table>
+  <p>Each configuration runs with 3 seeds. Curves show the mean ± one standard deviation, with each seed drawn faintly. Evaluation uses the 20 held-out tasks and the paper's protocol: explore with prior samples, then posterior sampling. Every hyperparameter is the authors' value, except the training length and network width, which were cut to fit a laptop. Those cuts are listed in the <a href="https://github.com/amalmehta/PEARL/blob/main/docs/SYSTEM-DESIGN.md#run-budget">run-budget table</a>.</p>
+
+  <h3>Does it meta-learn?</h3>
+  <div class="wide charts" data-results>
+    <div data-chart="learning:point"></div>
+    <div data-chart="learning:sparse_point"></div>
+    <div data-chart="learning:point_wind"></div>
+  </div>
+  <p id="results-text">Results are filled in from <code>results/summary.json</code>.</p>
+
+  <h3>Does it adapt within an episode?</h3>
+  <div class="wide charts">
+    <div data-chart="adapt:point"></div>
+    <div data-chart="adapt:sparse_point"></div>
+    <div data-chart="adapt:point_wind"></div>
+  </div>
+  <p id="adapt-text"></p>
+
+  <h3>Ablations: what each design choice buys</h3>
+  <div class="wide charts">
+    <div data-chart="learning:point:pearl:deterministic" data-title="Probabilistic vs deterministic z"></div>
+    <div data-chart="learning:point:pearl:rnn_transitions:rnn_trajectories" data-title="Encoder architecture"></div>
+    <div data-chart="learning:point:pearl:ctx_offpolicy:ctx_rlbatch" data-title="Where the context is sampled from"></div>
+  </div>
+  <p id="ablation-text"></p>
+
+  <h2 id="pitfalls">Pitfalls (or why it might not have worked last time)</h2>
+  <ul>
+    <li><b>Gradient routing.</b> The encoder must get gradients from Q and the KL only. If it learns from the policy loss, or gets no gradient at all because <span class="math">z</span> was detached everywhere, training still runs but <span class="math">z</span> carries no task information.</li>
+    <li><b>Context from the wrong data.</b> If the context comes from the whole replay buffer, it mixes old policies' behaviour with recent behaviour, and at test time the encoder sees a distribution it never trained on.</li>
+    <li><b>Reward scale.</b> The point-robot configs use <code>reward_scale = 100</code>. With SAC's entropy bonus fixed at 1, the reward scale sets how deterministic the policy becomes. Too small, and the policy stays random.</li>
+    <li><b>Sparse rewards are only half sparse in the reference code.</b> In <code>sac.py</code>, <code>sample_sac</code> notes "rewards are always dense": the critic trains on dense rewards and only the encoder sees sparse ones. This build does the same to stay faithful, and flags it here.</li>
+    <li><b>Evaluation protocol.</b> Returns depend on how many exploration trajectories run before the posterior is used (1 for dense tasks, 5 for sparse), and on whether the policy acts deterministically (it does).</li>
+  </ul>
+
+  <h2>Limits</h2>
+  <ul>
+    <li>No MuJoCo tasks, so no direct check of the paper's headline numbers. The sparse-goal exploration result is the closest analogue, and it is checked qualitatively.</li>
+    <li>Short training (the run-budget table) and narrower networks (128 units instead of 300). Absolute returns may sit below what full-length training would reach.</li>
+    <li>3 seeds give a rough spread, not a confidence interval.</li>
+  </ul>
+
+  <h2>References</h2>
+  <ol class="refs">
+    <li>K. Rakelly, A. Zhou, C. Finn, S. Levine, D. Quillen. <a href="https://proceedings.mlr.press/v97/rakelly19a.html">Efficient Off-Policy Meta-Reinforcement Learning via Probabilistic Context Variables</a>. ICML 2019, PMLR 97:5331–5340. <a href="https://arxiv.org/abs/1903.08254">arXiv:1903.08254</a>.</li>
+    <li>Reference implementation: <a href="https://github.com/katerakelly/oyster">github.com/katerakelly/oyster</a> (configs and training step checked against it).</li>
+    <li>T. Haarnoja et al. Soft Actor-Critic. ICML 2018. <a href="https://arxiv.org/abs/1801.01290">arXiv:1801.01290</a>.</li>
+    <li>A. Alemi et al. Deep Variational Information Bottleneck. ICLR 2017. <a href="https://arxiv.org/abs/1612.00410">arXiv:1612.00410</a>.</li>
+  </ol>
+  </article>
+
+  <footer>Built from scratch for learning. Code, experiments and docs: <a href="https://github.com/amalmehta/PEARL">github.com/amalmehta/PEARL</a>. Press ⌘, for settings.</footer>
+</main>
+
+<a class="feedback" href="https://github.com/amalmehta/PEARL/issues/new?title=Feedback%3A%20&labels=feedback" target="_blank" rel="noopener">Feedback</a>
+
+<dialog id="settings">
+  <form method="dialog">
+    <h3>Settings</h3>
+    <label>Theme
+      <select name="theme"><option value="system">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select>
+    </label>
+    <label>Demo speed <output>30 steps/s</output>
+      <input type="range" name="speed" min="5" max="120" step="5">
+    </label>
+    <label><input type="checkbox" name="ghosts"> Show other samples from the belief (thin lines)</label>
+    <button class="icon-btn" value="close">Done</button>
+  </form>
+</dialog>
+
+<script type="module">
+  import { mountSettings } from "./js/settings.js";
+  import { mountDemo } from "./js/demo.js";
+  import { mountProduct, mountResults } from "./js/figures.js";
+  import { mountText } from "./js/text.js";
+  mountSettings();
+  mountProduct(document.getElementById("pog"));
+  mountDemo(document.getElementById("demo-hero"));
+  mountResults().then(mountText);
+</script>
+</body>
+</html>
