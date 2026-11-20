@@ -590,3 +590,4 @@ CHANGELOG:
 - 2026-11-19 — updated the meta-instructions to the current meta doc
 - 2026-11-19 — wind range corrected to ±0.08 (what the code always used); run budget re-measured at ~12 h; stopped runs now resume; README, prompt log and viz log added; repo published
 - 2026-11-20 — full suite finished (9.5 h); dense and wind pass "Learns", sparse misses both of its done criteria and is labelled as such; results published
+- 2026-11-20 — equations typeset like a paper: numbered, no cards, consistent notation, a phone layout

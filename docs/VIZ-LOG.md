@@ -22,3 +22,11 @@ One entry per graphic on the site: what it shows, why it is drawn this way, the 
 - **Shows:** learning curves, within-episode adaptation and ablations. Mean ± std across seeds, each seed drawn faintly, with random-action and oracle reference lines.
 - **Data:** `site/data/summary.json`, copied from `results/summary.json` by `make export`.
 - **Checked:** 2026-11-19, against a synthetic summary (9 charts and all result sentences render). With no summary, each group shows a single "Not run yet" note. 2026-11-20, against the finished suite: all charts render, and the sentences now say whether each family passes the "learns" check, computed from the same numbers.
+
+## Equations (`site/index.html` `.eq`, `site/js/math.js`, KaTeX 0.16.9)
+
+- **Shows:** the five equations of the method: the product-of-Gaussians posterior (1) and its closed form (2), the KL bottleneck (3) and its closed form (4), and the critic loss that trains the encoder (5).
+- **Why this way:** they're typeset like a paper, centred on the page and numbered, with no card around them. Cards made them look like the interactive widgets. A short sans-serif gloss under an equation defines any symbol the text hasn't. Notation is consistent throughout: `q_φ` everywhere, tasks written 𝒯, `\Vert` for the KL bars, full-size ½ in display.
+- **Narrow screens:** equation numbers are hidden below 560 px, since the text never cites them and on a phone they collide with the right edge. Equation (4) has a two-line `data-tex-narrow` version that `math.js` swaps in.
+- **Checked:** 2026-11-20 at desktop and 375 px widths, light and dark: no KaTeX errors and no equation scrolls sideways.
+- **Changed:** 2026-11-20: cards removed, numbering added, the two halves of (2) merged into one line, notation unified, phone layout fixed.

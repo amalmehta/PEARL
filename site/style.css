@@ -30,7 +30,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(
 a { color: var(--accent); text-underline-offset: 2px; }
 code, pre { font: 13.5px/1.5 ui-monospace, "SF Mono", Menlo, monospace; }
 pre { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
-:not(pre) > code { background: color-mix(in srgb, var(--line) 55%, transparent); padding: 1px 5px; border-radius: 4px; }
+:not(pre) > code { background: color-mix(in srgb, var(--line) 55%, transparent); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
 
 /* layout: Distill-style 680px column with margin notes */
 .page { display: grid; grid-template-columns: 1fr min(680px, calc(100% - 32px)) 1fr; column-gap: 32px; }
@@ -65,18 +65,18 @@ h4 { font: 600 13px var(--sans); margin: 0 0 4px; color: var(--muted); }
 .callout { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin: 20px 0; }
 .callout p { margin: .3em 0; font-size: 17px; }
 .math { font-family: var(--serif); font-style: italic; white-space: nowrap; }
-.math .katex { font-size: 1.05em; }
-.eq { text-align: center; font-family: var(--serif); font-size: 19px; margin: 22px 0; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; overflow-y: hidden; }
+.math .katex { font-size: 1.08em; }
+/* display maths sits on the page like in a paper: centred, numbered, no card */
+.eq { text-align: center; font-size: 18.5px; margin: 26px 0 28px; padding: 2px 0; overflow-x: auto; overflow-y: hidden; }
 .eq .katex-display { margin: 0; }
-.eq .katex { font-size: 1.12em; }
-.eq .gloss { display: block; margin-top: 6px; font: 13px/1.4 var(--sans); color: var(--muted); }
+.eq .katex-display > .katex { font-size: 1.2em; }
+.eq .katex .tag { color: var(--muted); }
+.eq .gloss { display: block; max-width: 46em; text-wrap: balance; margin: 10px auto 0; font: 13.5px/1.45 var(--sans); color: var(--muted); }
 .eq .gloss .math { font-style: normal; }
 .eq .gloss .katex { font-size: 1em; }
-.eq-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
 @media (max-width: 560px) {
-  .eq { padding: 12px 10px; }
-  .eq .katex { font-size: 1em; }
-  .eq-pair { grid-template-columns: 1fr; }
+  .eq .katex-display > .katex { font-size: 1em; }
+  .eq .katex .tag { display: none; } /* no room for numbers on a phone; the text never cites them */
 }
 table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 16px 0; }
 th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
