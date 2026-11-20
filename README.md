@@ -13,3 +13,7 @@ PEARL (Rakelly, Zhou, Quillen, Finn & Levine, ICML 2019), the off-policy meta-RL
 - [System design](docs/SYSTEM-DESIGN.md): architecture, deviations from the authors' code, run budget, limits
 - [File structure](docs/FILE-STRUCTURE.md) · [Manual review](docs/MANUAL-REVIEW.md) · [Viz log](docs/VIZ-LOG.md) · [Prompt log](docs/PROMPTS.md)
 - Paper: [arXiv 1903.08254](https://arxiv.org/abs/1903.08254) · Authors' code: [katerakelly/oyster](https://github.com/katerakelly/oyster)
+
+## How it was built
+
+How this was built and how it works, with diagrams: [docs/HOW-IT-WAS-BUILT.md](docs/HOW-IT-WAS-BUILT.md)
