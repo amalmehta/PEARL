@@ -8,7 +8,7 @@ PEARL (Rakelly, Zhou, Quillen, Finn & Levine, ICML 2019), the off-policy meta-RL
 
 **Results:** the experiment suite (3 task families, the paper's ablations, 3 seeds) is still running. Charts and numbers appear on the site and in `results/RESULTS.md` when it finishes.
 
-- **Site:** [amalmehta.github.io/PEARL](https://amalmehta.github.io/PEARL/): writeup, demo, results
+- **Site:** [amalmehta.com/PEARL](https://amalmehta.com/PEARL/): writeup, demo, results
 - [Instructions](docs/INSTRUCTIONS.md): setup, tests, training, reproducing every figure
 - [System design](docs/SYSTEM-DESIGN.md): architecture, deviations from the authors' code, run budget, limits
 - [File structure](docs/FILE-STRUCTURE.md) · [Manual review](docs/MANUAL-REVIEW.md) · [Viz log](docs/VIZ-LOG.md) · [Prompt log](docs/PROMPTS.md)
