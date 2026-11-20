@@ -35,3 +35,11 @@ Every prompt given to the coding agent, word for word, in order, with what it le
 5. > Publish, labelled
 
    Given after the finished suite showed sparse Point-Robot missing its done criteria. Led to: results exported and published, with the shortfall stated in the README, the result sentences, the demo caption, Limits and SYSTEM-DESIGN.
+
+6. > Train sparse longer
+
+   Led to: finished runs can now be trained further by raising `num_iterations`. Sparse Point-Robot's budget went from 150 to 300 iterations, and its 3 seeds were resumed from iteration 150.
+
+7. > look at the equation typeset. make it way more clean
+
+   Led to: the display equations typeset like a paper (no cards, numbered, consistent notation), a two-line phone form for the widest one, and inline code that wraps on narrow screens.
