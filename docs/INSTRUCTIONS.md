@@ -14,7 +14,7 @@ make setup
 make test
 ```
 
-34 tests in about 35 seconds. They cover the product of Gaussians against a brute-force grid, the KL against `torch.distributions`, oyster's task lists, the sparse reward, buffer sequence sampling, that the encoder's gradient comes from the critic and not the policy, a short training run for every env × variant, seeded reproducibility, and that a stopped-then-resumed run gives exactly the same numbers as one that never stopped, and that the website's JavaScript networks give the same outputs as PyTorch on exported weights (needs Node.js; skipped without it).
+35 tests in about 35 seconds. They cover the product of Gaussians against a brute-force grid, the KL against `torch.distributions`, oyster's task lists, the sparse reward, buffer sequence sampling, that the encoder's gradient comes from the critic and not the policy, a short training run for every env × variant, seeded reproducibility, and that a stopped-then-resumed run, or a finished run trained further, gives exactly the same numbers as one that never stopped, and that the website's JavaScript networks give the same outputs as PyTorch on exported weights (needs Node.js; skipped without it).
 
 ## Train one run
 
@@ -27,7 +27,7 @@ make test
 - `--paper-scale`: use the authors' iteration counts and network width instead of the laptop budget
 - `--override '{"num_iterations": 5}'`: change any config key
 
-The run writes `metrics.json` (config plus one row per iteration), `agent.pt` (the weights) and `state.pt` (everything needed to resume: networks, optimisers, replay buffers, random-number states) into `--out` after every iteration. Progress is logged every 5 iterations. If the run is stopped (a crash, a reboot, Ctrl-C), the same command picks up at the next iteration.
+The run writes `metrics.json` (config plus one row per iteration), `agent.pt` (the weights) and `state.pt` (everything needed to resume: networks, optimisers, replay buffers, random-number states) into `--out` after every iteration. Progress is logged every 5 iterations. If the run is stopped (a crash, a reboot, Ctrl-C), the same command picks up at the next iteration. Raising `num_iterations` (in `pearl/config.py` or with `--override`) trains a finished run further from where it ended.
 
 ## Reproduce every experiment and figure
 

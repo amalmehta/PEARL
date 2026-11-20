@@ -162,6 +162,14 @@ def test_resumed_run_matches_uninterrupted_run(tmp_path):
     assert resumed[-1]["eval_curve"] == straight[-1]["eval_curve"]
 
 
+def test_finished_run_extends_when_iterations_raised(tmp_path):
+    short, long = (make_config("sparse_point", **{**TINY, "num_iterations": n}) for n in (2, 4))
+    straight = PEARL(long, seed=5).train(eval_every=1)
+    PEARL(short, seed=5, out_dir=tmp_path).train(eval_every=1)  # finishes at 2
+    extended = PEARL(long, seed=5, out_dir=tmp_path).train(eval_every=1)
+    assert [m["qf_loss"] for m in extended] == [m["qf_loss"] for m in straight]
+
+
 def test_state_from_another_config_is_ignored(tmp_path):
     PEARL(make_config("point", **TINY), seed=0, out_dir=tmp_path).train()
     fresh = PEARL(make_config("point", **TINY), seed=1, out_dir=tmp_path)

@@ -41,7 +41,7 @@ flowchart LR
 2. **One gradient step** (`train_step`). The encoder produces q(z|c) and z is sampled with gradients. The KL loss and the critic loss backpropagate into the encoder. V and the policy see z detached. The target V is soft-updated.
 3. **Meta-test** (`evaluate`). On each held-out task, start from the prior and sample z per trajectory. After `num_exp_traj_eval` trajectories, refit q(z|c) on all context accumulated in the episode before each new trajectory. The policy acts deterministically.
 4. **Results**. `make_figures.py` reads every `runs/*/*/seed*/metrics.json` and writes `results/summary.json`. The site's charts and result sentences are generated from that file, so no number is typed by hand.
-5. **Resume**. After every iteration `_save_state` writes `state.pt`: all five networks, all five optimisers, both replay buffers (filled rows only), and the NumPy, environment and PyTorch random-number states. It writes to a temp file, then renames it, so a kill mid-save can't corrupt it. `train()` loads the file if its config and seed match, and continues. A test checks that a resumed run's losses and returns are bit-identical to an uninterrupted run.
+5. **Resume**. After every iteration `_save_state` writes `state.pt`: all five networks, all five optimisers, both replay buffers (filled rows only), and the NumPy, environment and PyTorch random-number states. It writes to a temp file, then renames it, so a kill mid-save can't corrupt it. `train()` loads the file if its config and seed match, and continues. The iteration count alone may differ, so raising `num_iterations` trains a finished run further. A test checks that a resumed run's losses and returns are bit-identical to an uninterrupted run.
 6. **Demo**. `export.py` writes the policy and encoder weights as base64 float32, plus where they came from (run, iterations trained, env steps, last held-out return), which the demo prints under the canvas. The browser decodes them once, then each step costs one policy pass plus one encoder pass, and the posterior update is O(latent).
 
 ## Where data lives
@@ -95,7 +95,7 @@ Algorithmic hyperparameters (learning rates, reward scale, KL weight, discount, 
 - **Envs**: the task lists equal oyster's seed stream; the sparse reward formula; action rescaling and clipping; wind dynamics.
 - **Buffers**: trajectory sampling keeps order; ring-buffer wrap.
 - **Algorithm**: every env × variant trains for 2 iterations; the encoder gets gradients from Q and not from the policy; more context gives lower posterior variance; seeded runs are bit-identical.
-- **Resume**: a run stopped after 2 iterations and resumed to 4 matches an uninterrupted 4-iteration run exactly; a `state.pt` from a different seed or config is ignored.
+- **Resume**: a run stopped after 2 iterations and resumed to 4 matches an uninterrupted 4-iteration run exactly; a finished 2-iteration run extended to 4 matches too; a `state.pt` from a different seed or config is ignored.
 - **Browser parity**: weights exported from a short run, then run through `site/js/model.js` in Node, give the same actions and posterior factors as PyTorch (to 1e-5), for an env with and without next_obs in the context.
 
 What tests can't check is in `docs/MANUAL-REVIEW.md`.

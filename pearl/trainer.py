@@ -265,7 +265,9 @@ class PEARL:
         if f is None or not f.exists():
             return None
         s = torch.load(f, weights_only=False)
-        if s["cfg"] != self.cfg or s["seed"] != self.seed:
+        # only the length may differ, so a finished run can be trained further by raising num_iterations
+        same = {**s["cfg"], "num_iterations": None} == {**self.cfg, "num_iterations": None}
+        if not same or s["seed"] != self.seed:
             log.warning("state.pt in %s is from a different config or seed; starting fresh", self.out_dir)
             return None
         for k in self._NETS:
