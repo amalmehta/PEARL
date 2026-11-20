@@ -193,13 +193,20 @@ class PEARL:
         return out
 
     # ---- the loop -------------------------------------------------------------------
-    def train(self, eval_every=5):
+    def train(self, eval_every=5, resume=True):
+        """Meta-train. With an out_dir, the full state is saved after every iteration, and a run
+        that was stopped picks up where it left off (same result as never stopping)."""
         cfg = self.cfg
-        t0 = time.time()
-        metrics = []
-        for task in self.train_tasks:
-            self.collect_data(task, cfg["num_initial_steps"], np.inf)
-        for it in range(cfg["num_iterations"]):
+        metrics = self._load_state() if resume else None
+        if metrics is None:
+            metrics = []
+            for task in self.train_tasks:
+                self.collect_data(task, cfg["num_initial_steps"], np.inf)
+        else:
+            log.info("resuming %s/%s seed %d at iteration %d", cfg["env"], cfg["variant"], self.seed, len(metrics))
+        # wall-clock keeps counting from where the stopped run was
+        t0 = time.time() - (metrics[-1]["seconds"] if metrics else 0.0)
+        for it in range(len(metrics), cfg["num_iterations"]):
             for _ in range(cfg["num_tasks_sample"]):
                 task = int(self.rng.integers(len(self.train_tasks)))
                 self.enc_replay[task].clear()  # the encoder only ever sees recent data
@@ -234,3 +241,41 @@ class PEARL:
         (self.out_dir / "metrics.json").write_text(json.dumps(dict(config=self.cfg, seed=self.seed,
                                                                   metrics=metrics)))
         torch.save(dict(agent=self.agent.state_dict(), cfg=self.cfg), self.out_dir / "agent.pt")
+        self._save_state(metrics)
+
+    # ---- resume -----------------------------------------------------------------------
+    _NETS = ("agent", "qf1", "qf2", "vf", "target_vf")
+    _OPTS = ("policy_opt", "qf1_opt", "qf2_opt", "vf_opt", "context_opt")
+
+    def _save_state(self, metrics):
+        state = dict(
+            cfg=self.cfg, seed=self.seed, metrics=metrics, env_steps=self.env_steps,
+            nets={k: getattr(self, k).state_dict() for k in self._NETS},
+            opts={k: getattr(self, k).state_dict() for k in self._OPTS},
+            replay=self.replay.state(), enc_replay=self.enc_replay.state(),
+            rng=self.rng.bit_generator.state, env_rng=self.env.rng.bit_generator.state,
+            torch_rng=torch.get_rng_state(),
+        )
+        tmp = self.out_dir / "state.pt.tmp"
+        torch.save(state, tmp)
+        tmp.replace(self.out_dir / "state.pt")  # atomic: a kill mid-save never leaves a broken file
+
+    def _load_state(self):
+        f = self.out_dir / "state.pt" if self.out_dir else None
+        if f is None or not f.exists():
+            return None
+        s = torch.load(f, weights_only=False)
+        if s["cfg"] != self.cfg or s["seed"] != self.seed:
+            log.warning("state.pt in %s is from a different config or seed; starting fresh", self.out_dir)
+            return None
+        for k in self._NETS:
+            getattr(self, k).load_state_dict(s["nets"][k])
+        for k in self._OPTS:
+            getattr(self, k).load_state_dict(s["opts"][k])
+        self.replay.load_state(s["replay"])
+        self.enc_replay.load_state(s["enc_replay"])
+        self.rng.bit_generator.state = s["rng"]
+        self.env.rng.bit_generator.state = s["env_rng"]
+        torch.set_rng_state(s["torch_rng"])
+        self.env_steps = s["env_steps"]
+        return s["metrics"]

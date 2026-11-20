@@ -17,6 +17,8 @@ export async function mountDemo(root) {
   let data, agent, env, post, rng = mulberry32(7);
   let ep = null; // current episode state
   let playing = true, envName = "sparse_point", lastT = 0, acc = 0, pauseUntil = 0;
+  // redraw only when something changed and the canvas is on screen (saves battery while reading)
+  let dirty = true, visible = true;
 
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
@@ -25,6 +27,7 @@ export async function mountDemo(root) {
     const w = canvas.clientWidth;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(w * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dirty = true;
   }
   const W = () => canvas.clientWidth;
   const toPx = ([x, y]) => [(x / VIEW + 1) * W() / 2, (1 - y / VIEW) * W() / 2];
@@ -41,6 +44,11 @@ export async function mountDemo(root) {
     post = new Posterior(data.latent);
     root.classList.remove("loading");
     $(".hint").textContent = ENV_INFO[name].hint;
+    const t = data.trained;
+    $(".provenance").textContent = t
+      ? `These weights: ${t.run}, trained ${t.iterations} of ${t.of_iterations} iterations (${Math.round(t.env_steps / 1000)}k env steps)` +
+        (t.eval_final != null ? `; last-trajectory return on held-out tasks ${t.eval_final.toFixed(2)}.` : ".")
+      : "These weights were exported before training details were recorded, from a partly trained run. Expect rough behaviour until they are re-exported from the finished suite.";
     newEpisode(data.eval_tasks[Math.floor(rng() * data.eval_tasks.length)]);
   }
 
@@ -74,7 +82,7 @@ export async function mountDemo(root) {
   function stepOnce() {
     const s = ep.cur.pts[ep.cur.pts.length - 1];
     const { s: s2, r, feat } = env.step(agent.act(s, ep.z));
-    ep.cur.pts.push(s2); ep.cur.ret += r; ep.cur.t++;
+    ep.cur.pts.push(s2); ep.cur.ret += r; ep.cur.t++; dirty = true;
     post.add(agent.factor(feat)); // context accumulates every step; it is *used* per trajectory
     if (ep.cur.t >= data.horizon) endTraj();
   }
@@ -89,14 +97,14 @@ export async function mountDemo(root) {
 
   function frame(t) {
     const dt = Math.min(100, t - lastT); lastT = t;
-    if (data && ep && playing && t > pauseUntil) {
+    if (data && ep && playing && visible && t > pauseUntil) {
       if (ep.done) newEpisode(env.task);
       else {
         acc += dt * settings.speed / 1000;
         while (acc >= 1 && !ep.done && t > pauseUntil) { stepOnce(); acc -= 1; }
       }
     }
-    if (data && ep) draw();
+    if (data && ep && dirty && visible) { draw(); dirty = false; }
     requestAnimationFrame(frame);
   }
 
@@ -151,6 +159,7 @@ export async function mountDemo(root) {
 
   // side panel: belief width per latent dim and return per trajectory (CSS transitions do the easing)
   function renderPanel() {
+    dirty = true;
     const sd = ep.belief.v.map(Math.sqrt);
     $(".bars").innerHTML = sd.map((s, i) =>
       `<div class="bar"><span>z${i + 1}</span><i style="transform:scaleX(${Math.min(1, s).toFixed(3)})"></i><b>${s.toFixed(2)}</b></div>`).join("");
@@ -187,7 +196,9 @@ export async function mountDemo(root) {
   $(".play").addEventListener("click", (e) => { playing = !playing; e.currentTarget.textContent = playing ? "Pause" : "Play"; });
   $(".again").addEventListener("click", () => { pauseUntil = 0; newEpisode(data.eval_tasks[Math.floor(rng() * data.eval_tasks.length)]); });
   new ResizeObserver(resize).observe(canvas);
-  onSettings(() => { if (ep) { ep.ghosts = settings.ghosts ? imagine(ep.cur.pts[0], 6) : []; } });
+  onSettings(() => { if (ep) { ep.ghosts = settings.ghosts ? imagine(ep.cur.pts[0], 6) : []; } dirty = true; });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { dirty = true; });
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; dirty = true; }).observe(canvas);
 
   resize();
   await load(envName);

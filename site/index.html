@@ -24,7 +24,7 @@
 
 <main class="page">
   <section class="hero">
-    <div class="kicker">A from-scratch reimplementation of Rakelly, Zhou, Finn, Levine &amp; Quillen, ICML 2019</div>
+    <div class="kicker">A from-scratch reimplementation of Rakelly, Zhou, Quillen, Finn &amp; Levine, ICML 2019</div>
     <h1>Learning to explore by being unsure: PEARL, rebuilt from scratch</h1>
     <p class="lede">An agent dropped into a new task doesn't know what the task is. PEARL keeps a <em>belief</em> about it, acts as if one guess from that belief were true, and narrows the belief with every reward it sees. Because the belief is learned separately from the policy, it can all be trained off-policy, from old data.</p>
     <div class="byline"><span>Code: PyTorch 2.2.2, no RL libraries</span><span>3 task families · 6 variants · 3 seeds</span><span>Every number on this page is generated from <code>results/summary.json</code></span></div>
@@ -41,17 +41,17 @@
         <button class="icon-btn play">Pause</button>
         <button class="icon-btn again">New task</button>
       </div>
-      <canvas aria-label="Point robot trajectories"></canvas>
+      <canvas role="img" aria-label="Point robot trajectories. The status line beside it describes each trajectory as it runs."></canvas>
     </div>
     <div>
       <div class="hint"></div>
-      <div class="status"></div>
+      <div class="status" aria-live="polite"></div>
       <h4>Belief width: σ of q(z | c) per latent dimension</h4>
       <div class="bars"></div>
       <h4 style="margin-top:16px">Return of each trajectory in this episode</h4>
       <div class="returns"></div>
       <div class="keys"><span><i style="background:var(--explore)"></i>exploring (z ~ prior)</span><span><i style="background:var(--accent)"></i>z ~ posterior</span><span><i style="background:var(--muted);opacity:.5"></i>thin lines: other samples from the current belief</span></div>
-      <figcaption>The trained policy and encoder run live in your browser from weights exported by <code>pearl/export.py</code>. Each run is one meta-test episode, the same protocol as the evaluation in <code>pearl/trainer.py</code>.</figcaption>
+      <figcaption>The trained policy and encoder run live in your browser from weights exported by <code>pearl/export.py</code>. Each run is one meta-test episode, the same protocol as the evaluation in <code>pearl/trainer.py</code>. <span class="provenance"></span></figcaption>
     </div>
   </figure>
 
@@ -102,7 +102,7 @@
         collect trajectories with z ~ prior              # -> both buffers
         collect trajectories with z ~ posterior          # -> both buffers (or RL buffer only)
     repeat N times:
-        pick 16 tasks; for each: context c from encoder buffer, RL batch from replay buffer
+        pick a meta-batch of tasks (16 in the paper, 8 here); for each: context c from encoder buffer, RL batch from replay buffer
         mu, var = product_of_gaussians(encoder(c)); z = mu + sqrt(var) * eps
         critic loss + KL  -> update Q1, Q2, encoder
         value loss, policy loss (z detached), soft update of target V</code></pre>
@@ -125,7 +125,7 @@
     <div data-chart="learning:sparse_point"></div>
     <div data-chart="learning:point_wind"></div>
   </div>
-  <p id="results-text">Results are filled in from <code>results/summary.json</code>.</p>
+  <p id="results-text"></p>
 
   <h3>Does it adapt within an episode?</h3>
   <div class="wide charts">
@@ -161,7 +161,7 @@
 
   <h2>References</h2>
   <ol class="refs">
-    <li>K. Rakelly, A. Zhou, C. Finn, S. Levine, D. Quillen. <a href="https://proceedings.mlr.press/v97/rakelly19a.html">Efficient Off-Policy Meta-Reinforcement Learning via Probabilistic Context Variables</a>. ICML 2019, PMLR 97:5331–5340. <a href="https://arxiv.org/abs/1903.08254">arXiv:1903.08254</a>.</li>
+    <li>K. Rakelly, A. Zhou, D. Quillen, C. Finn, S. Levine. <a href="https://proceedings.mlr.press/v97/rakelly19a.html">Efficient Off-Policy Meta-Reinforcement Learning via Probabilistic Context Variables</a>. ICML 2019, PMLR 97:5331–5340. <a href="https://arxiv.org/abs/1903.08254">arXiv:1903.08254</a>.</li>
     <li>Reference implementation: <a href="https://github.com/katerakelly/oyster">github.com/katerakelly/oyster</a> (configs and training step checked against it).</li>
     <li>T. Haarnoja et al. Soft Actor-Critic. ICML 2018. <a href="https://arxiv.org/abs/1801.01290">arXiv:1801.01290</a>.</li>
     <li>A. Alemi et al. Deep Variational Information Bottleneck. ICLR 2017. <a href="https://arxiv.org/abs/1612.00410">arXiv:1612.00410</a>.</li>

@@ -133,6 +133,11 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; line-heigh
 .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
 .legend i, .tip i { display: inline-block; width: 10px; height: 3px; margin-right: 5px; vertical-align: middle; }
 .tip { position: absolute; top: 24px; right: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 12px; pointer-events: none; opacity: 0; transition: opacity .15s var(--ease); box-shadow: 0 4px 16px rgb(0 0 0 / .08); }
+.pending { display: grid; place-content: center; gap: 4px; min-height: 210px; padding: 16px 20px; border: 1px dashed var(--line); border-radius: 10px; text-align: center; font-size: 13px; color: var(--muted); }
+.pending p { margin: 0; font: inherit; }
+.pending p:first-child { font: 600 14px var(--sans); color: var(--ink); }
+.charts-pending { display: block; }
+.provenance { display: block; margin-top: 6px; }
 .static-fig { width: 100%; border-radius: 10px; border: 1px solid var(--line); }
 
 /* feedback tab + settings */
@@ -156,4 +161,16 @@ footer { margin: 72px 0 40px; padding-top: 20px; border-top: 1px solid var(--lin
   .lede { font-size: 19px; }
   .lede, article p, article li { font-size: 17px; }
 }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* opening: the mark springs in, then the page eases into place; once per load, never blocks input.
+   Text starts at 35% opacity, not 0, so a stalled animation clock (background prerender, crawlers,
+   headless screenshots) still shows a readable page. */
+header.top .brand img { animation: spring .55s cubic-bezier(.34, 1.56, .64, 1) both; }
+.hero { animation: rise .45s var(--ease) .1s both; }
+#demo-hero { animation: rise .45s var(--ease) .22s both; }
+@keyframes spring { from { opacity: 0; transform: scale(.4) rotate(-20deg); } }
+@keyframes rise { from { opacity: .35; transform: translateY(10px); } }
+@keyframes fade { from { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+  header.top .brand img, .hero, #demo-hero { animation: fade .3s ease both !important; }
+}

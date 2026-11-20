@@ -36,6 +36,18 @@ class TaskBuffer:
             self.top = (self.top + 1) % self.capacity
             self.size = min(self.size + 1, self.capacity)
 
+    FIELDS = ("obs", "actions", "rewards", "sparse_rewards", "next_obs", "terminals")
+
+    def state(self):
+        """Only the filled rows, so a checkpoint is small (for resuming a stopped run)."""
+        return dict(top=self.top, size=self.size, episode_starts=list(self.episode_starts),
+                    **{k: getattr(self, k)[: self.size].copy() for k in self.FIELDS})
+
+    def load_state(self, s):
+        self.top, self.size, self.episode_starts = s["top"], s["size"], list(s["episode_starts"])
+        for k in self.FIELDS:
+            getattr(self, k)[: self.size] = s[k]
+
     def _take(self, idx):
         return {
             "obs": self.obs[idx], "actions": self.actions[idx], "rewards": self.rewards[idx],
@@ -63,3 +75,10 @@ class MultiTaskBuffer:
 
     def __getitem__(self, idx):
         return self.tasks[idx]
+
+    def state(self):
+        return [t.state() for t in self.tasks]
+
+    def load_state(self, states):
+        for t, s in zip(self.tasks, states):
+            t.load_state(s)

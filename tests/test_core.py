@@ -1,3 +1,8 @@
+import json
+import shutil
+import subprocess
+from pathlib import Path
+
 import numpy as np
 import pytest
 import torch
@@ -7,6 +12,8 @@ from pearl.config import VARIANTS, make_config
 from pearl.envs import PointRobot, PointWind, SparsePointRobot
 from pearl.gaussian import kl_to_standard_normal, product_of_gaussians
 from pearl.trainer import PEARL
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 # ---- maths ----------------------------------------------------------------------------
@@ -139,3 +146,52 @@ def test_seeded_runs_are_reproducible():
     a = PEARL(make_config("point", **TINY), seed=3).train()
     b = PEARL(make_config("point", **TINY), seed=3).train()
     assert a[-1]["qf_loss"] == b[-1]["qf_loss"]
+
+
+def test_resumed_run_matches_uninterrupted_run(tmp_path):
+    cfg = make_config("sparse_point", **{**TINY, "num_iterations": 4})
+    straight = PEARL(cfg, seed=5).train(eval_every=1)
+    # stop after 2 iterations, then start a fresh process-like object on the same folder
+    PEARL(make_config("sparse_point", **{**TINY, "num_iterations": 2}), seed=5, out_dir=tmp_path).train(eval_every=1)
+    state = torch.load(tmp_path / "state.pt", weights_only=False)
+    state["cfg"] = cfg  # pretend the stopped run had been launched with the longer config
+    torch.save(state, tmp_path / "state.pt")
+    resumed = PEARL(cfg, seed=5, out_dir=tmp_path).train(eval_every=1)
+    assert len(resumed) == 4
+    assert [m["qf_loss"] for m in resumed] == [m["qf_loss"] for m in straight]
+    assert resumed[-1]["eval_curve"] == straight[-1]["eval_curve"]
+
+
+def test_state_from_another_config_is_ignored(tmp_path):
+    PEARL(make_config("point", **TINY), seed=0, out_dir=tmp_path).train()
+    fresh = PEARL(make_config("point", **TINY), seed=1, out_dir=tmp_path)
+    assert fresh._load_state() is None
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="needs Node.js to run the browser model")
+def test_browser_model_matches_torch(tmp_path):
+    """The demo's plain-JS forward passes (site/js/model.js) must equal PyTorch on exported weights."""
+    from pearl.export import export
+    for env in ("point", "point_wind"):  # point_wind: next_obs in the context, so a wider encoder input
+        run = tmp_path / env
+        alg = PEARL(make_config(env, **{**TINY, "num_iterations": 1}), seed=0, out_dir=run)
+        alg.train()
+        export(run, run / "agent.json", n_paths=1)
+        z = torch.tensor([[0.3, -0.2, 0.1, 0.5, -1.0]])
+        states = [[0.0, 0.0], [0.5, -0.5], [-0.8, 0.8]]
+        feat = [0.1, 0.2, 0.3, -0.4, 0.0] + ([0.15, 0.25] if alg.use_next_obs else [])
+        with torch.no_grad():
+            p = alg.agent.encoder(torch.tensor([[feat]]))[0, 0]
+        d = alg.agent.latent_dim
+        ref = dict(acts=[alg.agent.act(np.array(s, dtype=np.float32), z, deterministic=True).tolist() for s in states],
+                   mu=p[:d].tolist(), v=torch.nn.functional.softplus(p[d:]).tolist())
+        js = f"""
+          import {{ readFileSync }} from "fs";
+          const {{ Agent }} = await import({json.dumps((ROOT / "site/js/model.js").as_uri())});
+          const a = new Agent(JSON.parse(readFileSync({json.dumps(str(run / "agent.json"))})));
+          const f = a.factor({json.dumps(feat)});
+          console.log(JSON.stringify({{ acts: {json.dumps(states)}.map((s) => a.act(s, {json.dumps(z[0].tolist())})), mu: f.mu, v: f.v }}));
+        """
+        out = json.loads(subprocess.check_output(["node", "--input-type=module", "-e", js], text=True))
+        for k in ("acts", "mu", "v"):
+            np.testing.assert_allclose(out[k], ref[k], atol=1e-5, err_msg=f"{env}: {k}")

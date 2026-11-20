@@ -41,11 +41,12 @@ flowchart LR
 2. **One gradient step** (`train_step`). The encoder produces q(z|c) and z is sampled with gradients. The KL loss and the critic loss backpropagate into the encoder. V and the policy see z detached. The target V is soft-updated.
 3. **Meta-test** (`evaluate`). On each held-out task, start from the prior and sample z per trajectory. After `num_exp_traj_eval` trajectories, refit q(z|c) on all context accumulated in the episode before each new trajectory. The policy acts deterministically.
 4. **Results**. `make_figures.py` reads every `runs/*/*/seed*/metrics.json` and writes `results/summary.json`. The site's charts and result sentences are generated from that file, so no number is typed by hand.
-5. **Demo**. `export.py` writes the policy and encoder weights as base64 float32. The browser decodes them once, then each step costs one policy pass plus one encoder pass, and the posterior update is O(latent).
+5. **Resume**. After every iteration `_save_state` writes `state.pt`: all five networks, all five optimisers, both replay buffers (filled rows only), and the NumPy, environment and PyTorch random-number states. It writes to a temp file, then renames it, so a kill mid-save can't corrupt it. `train()` loads the file if its config and seed match, and continues. A test checks that a resumed run's losses and returns are bit-identical to an uninterrupted run.
+6. **Demo**. `export.py` writes the policy and encoder weights as base64 float32, plus where they came from (run, iterations trained, env steps, last held-out return), which the demo prints under the canvas. The browser decodes them once, then each step costs one policy pass plus one encoder pass, and the posterior update is O(latent).
 
 ## Where data lives
 
-There are no servers, no accounts and no database. Raw runs are in `runs/` (git-ignored, regenerable). Committed aggregates are in `results/` and `figures/`, and the exported weights are in `site/data/`, a few hundred kB per family. The site keeps only viewer preferences, in `localStorage`, wrapped in try/catch.
+There are no servers, no accounts and no database. Raw runs are in `runs/` (git-ignored, regenerable), including each run's `state.pt` (a few MB to tens of MB, mostly the replay buffers). Committed aggregates are in `results/` and `figures/`, and the exported weights are in `site/data/`, a few hundred kB per family. The site keeps only viewer preferences, in `localStorage`, wrapped in try/catch.
 
 ## Key decisions and trade-offs
 
@@ -54,6 +55,8 @@ There are no servers, no accounts and no database. Raw runs are in `runs/` (git-
 - **Faithful by default, budget made explicit.** Algorithmic hyperparameters are the authors' values. Only training length and width are cut (see below), and they are listed in one place.
 - **Plain JS forward passes, not ONNX.** The networks are 3-layer MLPs. A 40-line forward pass loads instantly and needs no runtime.
 - **Incremental posterior in the demo.** Because precisions add, each new transition costs one encoder call, not a re-encoding of the whole context. That keeps every frame well inside 16 ms.
+- **Resume by saving everything, every iteration.** A stopped 12-hour suite used to throw away every partial run. Saving the full state each iteration costs well under a second, against 1–2 minutes per iteration. Saving every k iterations would be cheaper but loses up to k iterations on a stop.
+- **The demo redraws only on change.** The canvas repaints only when a step, resize, theme or setting changes it, and the simulation pauses while it is scrolled off screen. Before, it repainted every frame forever.
 - **Prose generated from the numbers.** `site/js/text.js` builds the result sentences from `summary.json`, so the writeup can't drift from the data.
 
 ## Deviations from the reference code
@@ -78,7 +81,9 @@ Algorithmic hyperparameters (learning rates, reward scale, KL weight, discount, 
 | Hidden width (policy, Q, V) | 300 | 128 | smaller function class |
 | Context batch, sparse task | 1024 | 256 | noisier posterior during training |
 
-**Why these numbers:** measured on this machine (Intel i9-9980HK, 8 cores / 16 threads, CPU only). One authors'-size step (16 × 256, width 300) took 398 ms at 2 threads; width 128 took 113 ms; halving the meta-batch and the batch cuts it about 4× again. A 40-iteration smoke run at this budget took dense Point-Robot from −24.8 (last trajectory, iteration 4) to −11.0 (iteration 29), still rising, which is why the suite runs 150 iterations. The full suite (24 runs, 8 in parallel) takes about four hours when the machine is otherwise idle.
+**Why these numbers:** measured on this machine (Intel i9-9980HK, 8 cores / 16 threads, CPU only). One authors'-size step (16 × 256, width 300) took 398 ms at 2 threads; width 128 took 113 ms; halving the meta-batch and the batch cuts it about 4× again. A 40-iteration smoke run at this budget took dense Point-Robot from −24.8 (last trajectory, iteration 4) to −11.0 (iteration 29), still rising, which is why the suite runs 150 iterations.
+
+**How long the suite takes (measured, not estimated).** An earlier note said about four hours. That was wrong. The first attempt (2026-10-20) ran 8 jobs in parallel at about 2 minutes per iteration on the slowest configurations (sparse Point-Robot, the RNN ablations), and stopped after about 47 of 150 iterations. On 2026-11-19, sparse Point-Robot's first iteration took 80 s with 8 jobs running. So the slowest runs take 3–5 hours each and the suite takes about 12 hours, depending on what else the machine is doing. `make status` prints the live figure.
 
 **Reference lines in every figure:** *random actions* (uniform in [−1, 1]²) and an *oracle* that knows the task and steers straight at the goal at full speed, cancelling the wind. Both are computed by `make_figures.py` on the same 20 held-out tasks.
 
@@ -90,6 +95,8 @@ Algorithmic hyperparameters (learning rates, reward scale, KL weight, discount, 
 - **Envs**: the task lists equal oyster's seed stream; the sparse reward formula; action rescaling and clipping; wind dynamics.
 - **Buffers**: trajectory sampling keeps order; ring-buffer wrap.
 - **Algorithm**: every env × variant trains for 2 iterations; the encoder gets gradients from Q and not from the policy; more context gives lower posterior variance; seeded runs are bit-identical.
+- **Resume**: a run stopped after 2 iterations and resumed to 4 matches an uninterrupted 4-iteration run exactly; a `state.pt` from a different seed or config is ignored.
+- **Browser parity**: weights exported from a short run, then run through `site/js/model.js` in Node, give the same actions and posterior factors as PyTorch (to 1e-5), for an env with and without next_obs in the context.
 
 What tests can't check is in `docs/MANUAL-REVIEW.md`.
 

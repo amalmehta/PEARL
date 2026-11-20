@@ -505,7 +505,7 @@ DEFINITIONS AND DEFERRED:
   2. Sparse Point-Robot: oyster `sparse-point-robot`. Goals on a radius-1 half circle, reward
      only within radius 0.2, horizon 20. This is the paper's Fig. 7 exploration task.
   3. Point-Wind (dynamics vary): NOT in the paper, invented for this project and labelled
-     that way everywhere. Fixed goal at the origin, per-task wind w ~ U[-0.05,0.05]^2 added
+     that way everywhere. Fixed goal at the origin, per-task wind w ~ U[-0.08,0.08]^2 added
      to every step, next_obs included in the context.
 - "Matches the paper" (done criterion): sparse Point-Robot with PEARL beats the
   prior-only first trajectory and reaches the goal radius by trajectory <= 5 of evaluation on
@@ -519,8 +519,9 @@ DEFINITIONS AND DEFERRED:
 - "Learns" (done criterion): the PEARL mean last-trajectory return on each family ends closer to
   the oracle than to random actions.
 - Seeds: 3 per configuration. Report mean ± std across seeds and show each seed faintly.
-- Run budget: the whole suite runs from one command (`make experiments`) in a few hours on
-  the 16-thread Intel i9 CPU.
+- Run budget: the whole suite runs from one command (`make experiments`) on the 16-thread
+  Intel i9 CPU. Measured 2026-11-19: about 12 hours with 8 runs in parallel; a stopped run
+  resumes from its last iteration.
 - Demo done criterion: in the browser, pick or click a goal and the trained policy runs
   live in JS from exported weights. You see exploration trajectories and the posterior's
   variance shrink as context accumulates. Every step renders within a 16 ms frame.
@@ -587,3 +588,4 @@ CHANGELOG:
 - 2026-10-20 — added meta-instruction: make the UI/UX buttery smooth (instant response, nothing blocking the main thread, full-frame-rate motion, no flicker or jumps)
 - 2026-11-09 — updated the meta-instructions to the current meta doc
 - 2026-11-19 — updated the meta-instructions to the current meta doc
+- 2026-11-19 — wind range corrected to ±0.08 (what the code always used); run budget re-measured at ~12 h; stopped runs now resume; README, prompt log and viz log added; repo published

@@ -1,12 +1,14 @@
 PY := .venv/bin/python
 
-.PHONY: setup test experiments figures export site all
+.PHONY: setup test experiments status figures export site all
 setup:            ## create the venv and install pinned deps
 	uv venv --python 3.11 .venv && uv pip install --python .venv -e ".[dev]"
 test:             ## unit tests (about 20 s)
 	$(PY) -m pytest -q
-experiments:      ## the whole suite: 8 configs x 3 seeds, then figures (hours, resumable)
+experiments:      ## the whole suite: 8 configs x 3 seeds, then figures (~12 h on a laptop CPU; resumes where it stopped)
 	$(PY) experiments/run_all.py
+status:           ## progress of every run in the suite, with time left
+	$(PY) experiments/run_all.py --status
 figures:          ## regenerate results/ and figures/ from runs/
 	$(PY) experiments/make_figures.py
 export:           ## export seed-0 PEARL agents + results for the website

@@ -1,9 +1,12 @@
-// Result sentences are generated from data/summary.json, so the prose can never drift from the numbers.
+// Result sentences are generated from data/summary.json (passed in by mountResults, fetched once), so the prose can never drift from the numbers.
 const fmt = (r) => `${r.final_mean.toFixed(2)} ± ${r.final_std.toFixed(2)}`;
 
-export async function mountText() {
-  let s;
-  try { s = await fetch("data/summary.json").then((r) => r.json()); } catch { return; }
+export function mountText(s) {
+  if (!s) {
+    document.getElementById("results-text").textContent =
+      "No results yet: the experiment suite is still running. The charts above, and the sentences that describe them, are generated from its output, so nothing here is typed in by hand.";
+    return;
+  }
   const R = s.runs, rand = s.random_policy;
   const envs = [["point", "Dense Point-Robot"], ["sparse_point", "Sparse Point-Robot"], ["point_wind", "Point-Wind"]];
 

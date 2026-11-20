@@ -117,17 +117,35 @@ function chart(container, { series, xlabel, ylabel, refLines = [], xs }) {
 
 const ENV_LABEL = { point: "Point-Robot (dense)", sparse_point: "Sparse Point-Robot", point_wind: "Point-Wind (invented)" };
 
+// A chart whose runs haven't finished says so, rather than leaving a blank box.
+function pending(box, title, names) {
+  const what = names ? `Not run yet: ${names.join(" · ")}` : "Not run yet";
+  box.innerHTML = `${title ? `<h4>${title}</h4>` : ""}<div class="pending"><p>${what}</p>
+    <p>${names ? "These charts draw themselves" : "This chart draws itself"} from <code>results/summary.json</code>
+    once the runs behind ${names ? "them" : "it"} finish (<code>make experiments</code>, about 12 hours on a laptop CPU).</p></div>`;
+}
+const chartTitle = (box) => box.dataset.title || ENV_LABEL[box.dataset.chart.split(":")[1]];
+
 export async function mountResults() {
-  let summary;
-  try { summary = await fetch("data/summary.json").then((r) => r.json()); }
-  catch { return; }
+  let summary = null;
+  try { summary = await fetch("data/summary.json").then((r) => r.json()); } catch { /* not run yet */ }
+  if (!summary) {
+    // nothing has run: one note per group of charts, naming what it will show, not one per chart
+    document.querySelectorAll(".charts").forEach((group) => {
+      const names = [...group.querySelectorAll("[data-chart]")].map(chartTitle);
+      group.classList.add("charts-pending");
+      pending(group, "", names);
+    });
+    return null;
+  }
   const runs = summary.runs;
   document.querySelectorAll("[data-chart]").forEach((box) => {
     const [kind, env, ...variants] = box.dataset.chart.split(":");
     const vs = variants.length ? variants : ["pearl"];
     const sel = vs.map((v) => runs[`${env}/${v}`]).filter(Boolean);
-    if (!sel.length) return;
-    const head = document.createElement("h4"); head.textContent = box.dataset.title || ENV_LABEL[env];
+    const title = chartTitle(box);
+    if (!sel.length) return pending(box, title);
+    const head = document.createElement("h4"); head.textContent = title;
     box.append(head);
     if (kind === "learning") {
       chart(box, {
@@ -150,4 +168,5 @@ export async function mountResults() {
     n.textContent = field === "final" ? `${r.final_mean.toFixed(2)} ± ${r.final_std.toFixed(2)}`
       : field === "first" ? r.first_traj_mean.toFixed(2) : field === "random" ? summary.random_policy[r.env].toFixed(2) : "";
   });
+  return summary;
 }

@@ -4,6 +4,7 @@ These are things the automated tests can't judge. Tick each one on the published
 
 ## Feel and smoothness
 
+- [ ] On load, the icon springs in and the title and demo ease up, in under a second; you can click and scroll during it. With Reduce Motion on, it is a plain fade.
 - [ ] Clicking the canvas moves the goal (or the wind) immediately, with no visible delay (< 100 ms).
 - [ ] The robot moves at a steady rate with no stutter, including while scrolling the page.
 - [ ] Switching task family keeps the last frame visible (dimmed) until the new weights load. There's no blank box or jump.
@@ -11,6 +12,7 @@ These are things the automated tests can't judge. Tick each one on the published
 - [ ] Dragging the product-of-Gaussians sliders redraws on every input event without lag.
 - [ ] Hovering the result charts shows the readout immediately. Moving out hides it smoothly.
 - [ ] Nothing shifts layout as fonts, data or charts load (canvas and chart boxes have fixed aspect ratios).
+- [ ] Paused or scrolled away, the demo uses no CPU (Performance monitor: about 0% while it's off screen).
 - [ ] Profile: in DevTools Performance, record 10 s of the demo at speed 120. Every frame should stay under 16 ms of scripting; record the worst frame here: ____ ms.
 
 ## Look
@@ -23,6 +25,8 @@ These are things the automated tests can't judge. Tick each one on the published
 ## Content
 
 - [ ] Every number on the page matches `results/RESULTS.md`.
+- [ ] Before results exist, each chart box reads "Not run yet" and the sentence under the charts says the suite is still running.
+- [ ] The demo caption names the run the weights came from and how many iterations it trained.
 - [ ] Estimates, reported-not-reproduced claims, and invented parameters are labelled.
 - [ ] The links to the paper, PMLR, oyster and the repo all resolve.
 
