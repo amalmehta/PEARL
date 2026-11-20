@@ -44,8 +44,9 @@ PAPER_ENV = {
 # Laptop budget (see docs/SYSTEM-DESIGN.md, "Run budget").
 BUDGET = {
     # all three: 8 tasks x 128 transitions per step instead of 16 x 256, 128-unit nets instead of 300,
-    # 250 gradient steps per iteration instead of 1000, 150 iterations instead of 500
-    env: dict(num_iterations=150, num_train_steps_per_itr=250, net_size=128, meta_batch=8, batch_size=128,
+    # 250 gradient steps per iteration instead of 1000, 150 iterations instead of 500 (300 for sparse: at 150
+    # it missed its done criteria and was still improving, see docs/SYSTEM-DESIGN.md)
+    env: dict(num_iterations=300 if env == "sparse_point" else 150, num_train_steps_per_itr=250, net_size=128, meta_batch=8, batch_size=128,
               **({"embedding_batch_size": 256, "embedding_mini_batch_size": 256} if env == "sparse_point" else {}))
     for env in ("point", "sparse_point", "point_wind")
 }
@@ -57,6 +58,9 @@ VARIANTS = {
     "rnn_trajectories": dict(recurrent=True, sequence_context=True),
     "ctx_offpolicy": dict(context_sampling="offpolicy"),
     "ctx_rlbatch": dict(context_sampling="rlbatch"),
+    # not a paper ablation: undoes the budget's context-batch cut (1024 -> 256), to test whether that cut
+    # is why sparse Point-Robot falls short (2026-11-20)
+    "ctx_full": dict(embedding_batch_size=1024, embedding_mini_batch_size=1024),
 }
 
 

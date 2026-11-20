@@ -28,6 +28,8 @@ SUITE = [
     ("point", "deterministic"),
     ("point", "rnn_transitions"), ("point", "rnn_trajectories"),
     ("point", "ctx_offpolicy"), ("point", "ctx_rlbatch"),
+    # sparse Point-Robot with the authors' context batch (1024) instead of the budget's 256
+    ("sparse_point", "ctx_full"),
 ]
 
 

@@ -74,7 +74,7 @@ Algorithmic hyperparameters (learning rates, reward scale, KL weight, discount, 
 
 | Setting | Authors (oyster) | Here | Effect |
 |---|---|---|---|
-| Iterations | 500 | 150 | shorter training |
+| Iterations | 500 | 150 (300 for sparse) | shorter training |
 | Gradient steps / iteration | 1000 | 250 | 4× fewer updates per batch of data |
 | Tasks per meta-batch | 16 | 8 | noisier gradients |
 | RL batch per task | 256 | 128 | noisier gradients |

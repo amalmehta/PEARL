@@ -21,10 +21,11 @@ ENV_LABEL = {"point": "Point-Robot (dense)", "sparse_point": "Sparse Point-Robot
              "point_wind": "Point-Wind (invented)"}
 VARIANT_LABEL = {"pearl": "PEARL", "deterministic": "Deterministic z", "rnn_transitions": "RNN, shuffled transitions",
                  "rnn_trajectories": "RNN, whole trajectories", "ctx_offpolicy": "Context from whole buffer",
-                 "ctx_rlbatch": "Context = RL batch"}
+                 "ctx_rlbatch": "Context = RL batch", "ctx_full": "PEARL, context batch 1024"}
 # warm palette; ablation groups share a hue family
 COLORS = {"pearl": "#c2410c", "deterministic": "#2563eb", "rnn_transitions": "#7c3aed",
-          "rnn_trajectories": "#a78bfa", "ctx_offpolicy": "#0f766e", "ctx_rlbatch": "#5eead4"}
+          "rnn_trajectories": "#a78bfa", "ctx_offpolicy": "#0f766e", "ctx_rlbatch": "#5eead4",
+          "ctx_full": "#b45309"}
 ABLATIONS = {"Probabilistic vs deterministic z": ["pearl", "deterministic"],
              "Encoder architecture": ["pearl", "rnn_transitions", "rnn_trajectories"],
              "Where the context is sampled from": ["pearl", "ctx_offpolicy", "ctx_rlbatch"]}
