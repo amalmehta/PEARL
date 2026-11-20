@@ -154,7 +154,7 @@
 
   <h2>Limits</h2>
   <ul>
-    <li>No MuJoCo tasks, so no direct check of the paper's headline numbers. The sparse-goal exploration result is the closest analogue, and it is checked qualitatively.</li>
+    <li>No MuJoCo tasks, so no direct check of the paper's headline numbers. The sparse-goal exploration result is the closest analogue, and <b>it falls short</b>. The bar was reaching the goal by the 5th trajectory on most held-out tasks, as in the paper's Fig. 7. The trained agents managed it on 4, 1 and 7 of 20 tasks across the three seeds (checked 2026-11-20). Where an agent finds the goal it stays there, and returns were still rising slowly when training stopped, so the shortened training is the likely cause. That is not yet tested.</li>
     <li>Short training (the run-budget table) and narrower networks (128 units instead of 300). Absolute returns may sit below what full-length training would reach.</li>
     <li>3 seeds give a rough spread, not a confidence interval.</li>
   </ul>

@@ -47,7 +47,8 @@ export async function mountDemo(root) {
     const t = data.trained;
     $(".provenance").textContent = t
       ? `These weights: ${t.run}, trained ${t.iterations} of ${t.of_iterations} iterations (${Math.round(t.env_steps / 1000)}k env steps)` +
-        (t.eval_final != null ? `; last-trajectory return on held-out tasks ${t.eval_final.toFixed(2)}.` : ".")
+        (t.eval_final != null ? `; last-trajectory return on held-out tasks ${t.eval_final.toFixed(2)}.` : ".") +
+        (name === "sparse_point" ? " This task falls short of the paper's result: on most goals the agent never finds the reward region (see Limits)." : "")
       : "These weights were exported before training details were recorded, from a partly trained run. Expect rough behaviour until they are re-exported from the finished suite.";
     newEpisode(data.eval_tasks[Math.floor(rng() * data.eval_tasks.length)]);
   }

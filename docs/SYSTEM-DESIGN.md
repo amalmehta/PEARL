@@ -83,7 +83,7 @@ Algorithmic hyperparameters (learning rates, reward scale, KL weight, discount, 
 
 **Why these numbers:** measured on this machine (Intel i9-9980HK, 8 cores / 16 threads, CPU only). One authors'-size step (16 × 256, width 300) took 398 ms at 2 threads; width 128 took 113 ms; halving the meta-batch and the batch cuts it about 4× again. A 40-iteration smoke run at this budget took dense Point-Robot from −24.8 (last trajectory, iteration 4) to −11.0 (iteration 29), still rising, which is why the suite runs 150 iterations.
 
-**How long the suite takes (measured, not estimated).** An earlier note said about four hours. That was wrong. The first attempt (2026-10-20) ran 8 jobs in parallel at about 2 minutes per iteration on the slowest configurations (sparse Point-Robot, the RNN ablations), and stopped after about 47 of 150 iterations. On 2026-11-19, sparse Point-Robot's first iteration took 80 s with 8 jobs running. So the slowest runs take 3–5 hours each and the suite takes about 12 hours, depending on what else the machine is doing. `make status` prints the live figure.
+**How long the suite takes (measured, not estimated).** An earlier note said about four hours. That was wrong. The first attempt (2026-10-20) ran 8 jobs in parallel at about 2 minutes per iteration on the slowest configurations (sparse Point-Robot, the RNN ablations), and stopped after about 47 of 150 iterations. On 2026-11-19, sparse Point-Robot's first iteration took 80 s with 8 jobs running. So the slowest runs take 3–5 hours each and the suite takes about 12 hours, depending on what else the machine is doing. `make status` prints the live figure. The full run on 2026-11-19/20 took 9 h 33 min (16:10 to 01:43). Other work kept the machine's load near 48, and the slowest runs took 4.9 h (RNN ablations) and 4.1 h (sparse Point-Robot).
 
 **Reference lines in every figure:** *random actions* (uniform in [−1, 1]²) and an *oracle* that knows the task and steers straight at the goal at full speed, cancelling the wind. Both are computed by `make_figures.py` on the same 20 held-out tasks.
 
@@ -105,4 +105,5 @@ What tests can't check is in `docs/MANUAL-REVIEW.md`.
 - No MuJoCo, so the paper's headline numbers are cited, not reproduced.
 - Short training and narrower nets (the run budget). Absolute returns are below what full-length training would give.
 - 3 seeds give a rough spread, not a confidence interval.
-- Point-Wind is invented, so there is no paper result to compare it with.
+- Point-Wind is invented, so there is no paper result to compare it with. It is also easy: the first trajectory, on a prior sample, already scores −4.84 against the oracle's −3.38, so it shows little adaptation.
+- Sparse Point-Robot misses both of its done criteria (2026-11-20). Its mean last-trajectory return (1.93) is closer to random (0) than to the oracle (13.38). Checked per task with the final agents, it reaches the goal by the 5th trajectory on 4, 1 and 7 of 20 held-out tasks, where the bar was most of them. Returns were still rising slowly at iteration 150. Training it longer is the next thing to try, which needs `train()` to accept a higher iteration count on resume.

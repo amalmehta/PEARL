@@ -12,10 +12,14 @@ export function mountText(s) {
 
   const learn = envs.filter(([e]) => R[`${e}/pearl`]).map(([e, name]) => {
     const r = R[`${e}/pearl`];
-    return `<b>${name}</b>: the last trajectory scores ${fmt(r)}, against ${rand[e].toFixed(2)} for random actions and ${s.oracle[e].toFixed(2)} for an oracle that knows the task`;
+    // the spec's "Learns" done criterion: the mean ends closer to the oracle than to random actions
+    const learns = Math.abs(r.final_mean - s.oracle[e]) < Math.abs(r.final_mean - rand[e]);
+    return `<b>${name}</b>: the last trajectory scores ${fmt(r)}, against ${rand[e].toFixed(2)} for random actions and ${s.oracle[e].toFixed(2)} for an oracle that knows the task. ` +
+      (learns ? "That is closer to the oracle than to random, so it passes the “learns” check"
+              : "<b>That is closer to random than to the oracle, so it fails the “learns” check</b>");
   });
   document.getElementById("results-text").innerHTML =
-    `Return of the last trajectory of a meta-test episode on the 20 held-out tasks, after training (mean ± std over seeds). ${learn.join("; ")}.`;
+    `Return of the last trajectory of a meta-test episode on the 20 held-out tasks, after training (mean ± std over seeds). ${learn.join(". ")}.`;
 
   const adapt = envs.filter(([e]) => R[`${e}/pearl`]).map(([e, name]) => {
     const r = R[`${e}/pearl`];

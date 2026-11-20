@@ -26,6 +26,7 @@ These are things the automated tests can't judge. Tick each one on the published
 
 - [ ] Every number on the page matches `results/RESULTS.md`.
 - [ ] Before results exist, each chart box reads "Not run yet" and the sentence under the charts says the suite is still running.
+- [ ] With results, the sentence under the learning curves names each family's pass or fail on the "learns" check, and the Sparse goal demo caption says it falls short.
 - [ ] The demo caption names the run the weights came from and how many iterations it trained.
 - [ ] Estimates, reported-not-reproduced claims, and invented parameters are labelled.
 - [ ] The links to the paper, PMLR, oyster and the repo all resolve.

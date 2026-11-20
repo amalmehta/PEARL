@@ -8,7 +8,7 @@ One entry per graphic on the site: what it shows, why it is drawn this way, the 
 - **Why a canvas:** the point is motion. You watch exploration narrow onto the goal step by step, which a static chart hides. It draws a few hundred line segments per frame, far below the point where WebGL would be needed.
 - **Data:** weights exported by `pearl/export.py`. The environment dynamics are a direct port of `pearl/envs.py`.
 - **Checked:** `test_browser_model_matches_torch` runs `model.js` in Node on exported weights and matches PyTorch to 1e-5. On 2026-11-19: screenshots in light and dark mode, and redraws now happen only on change, with the simulation paused off screen.
-- **Changed:** 2026-11-19: the caption shows where the weights came from; draw-on-change; aria-live status line.
+- **Changed:** 2026-11-19: the caption shows where the weights came from; draw-on-change; aria-live status line. 2026-11-20: weights re-exported from the finished seed-0 runs; the sparse-goal caption says that task falls short.
 
 ## Product of Gaussians (`site/js/figures.js` → `mountProduct`, SVG)
 
@@ -21,4 +21,4 @@ One entry per graphic on the site: what it shows, why it is drawn this way, the 
 
 - **Shows:** learning curves, within-episode adaptation and ablations. Mean ± std across seeds, each seed drawn faintly, with random-action and oracle reference lines.
 - **Data:** `site/data/summary.json`, copied from `results/summary.json` by `make export`.
-- **Checked:** 2026-11-19, against a synthetic summary (9 charts and all result sentences render). With no summary, each group shows a single "Not run yet" note. Not yet checked against real results, because the suite is still running.
+- **Checked:** 2026-11-19, against a synthetic summary (9 charts and all result sentences render). With no summary, each group shows a single "Not run yet" note. 2026-11-20, against the finished suite: all charts render, and the sentences now say whether each family passes the "learns" check, computed from the same numbers.

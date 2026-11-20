@@ -6,7 +6,11 @@ PEARL (Rakelly, Zhou, Quillen, Finn & Levine, ICML 2019), the off-policy meta-RL
 
 *Each transition casts a Gaussian vote on what the task is, and the belief is their product. That is why more evidence can only narrow it. This figure is interactive on the site.*
 
-**Results:** the experiment suite (3 task families, the paper's ablations, 3 seeds) is still running. Charts and numbers appear on the site and in `results/RESULTS.md` when it finishes.
+**Results** (3 seeds, last-trajectory return on 20 held-out tasks, full table in [`results/RESULTS.md`](results/RESULTS.md)):
+
+- **Learns on dense Point-Robot** (−11.95 ± 1.19; random −21.08, oracle −4.49), only just past the halfway mark, and on Point-Wind (−3.98 ± 0.18; oracle −3.38).
+- **Falls short on Sparse Point-Robot** (1.93 ± 1.01; random 0, oracle 13.38). It reaches the goal by the 5th trajectory on 4, 1 and 7 of 20 tasks, short of the paper's Fig. 7. The likely cause is the shortened training, but that is untested.
+- **Ablations agree with the paper on z:** a deterministic z falls to random (−21.09). The RNN encoders come close to PEARL at about twice the cost per run.
 
 - **Site:** [amalmehta.com/PEARL](https://amalmehta.com/PEARL/): writeup, demo, results
 - [Instructions](docs/INSTRUCTIONS.md): setup, tests, training, reproducing every figure

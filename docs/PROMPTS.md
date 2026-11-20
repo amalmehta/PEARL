@@ -23,3 +23,15 @@ Every prompt given to the coding agent, word for word, in order, with what it le
 2. Answers in the question widget: "Add resume, run full suite (Recommended)"; "Keep ±0.08, fix the spec (Recommended)".
 
    Led to: the full suite started in the background, and the spec's wind range changed to ±0.08.
+
+3. > Yes, when it's done
+
+   Led to: a background watcher that waited for the suite to finish, then this check-and-publish step.
+
+4. > how's the suite going?
+
+   Led to: a progress report (8 of 24 runs going, slowed by other load on the machine).
+
+5. > Publish, labelled
+
+   Given after the finished suite showed sparse Point-Robot missing its done criteria. Led to: results exported and published, with the shortfall stated in the README, the result sentences, the demo caption, Limits and SYSTEM-DESIGN.
