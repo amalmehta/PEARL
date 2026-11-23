@@ -12,4 +12,5 @@ the return of the LAST trajectory of a meta-test episode on the 20 held-out task
 | Point-Robot (dense) | RNN, whole trajectories | 3 | -15.55 | -12.31 ± 0.39 | -21.08 | -4.49 | 294 |
 | Point-Robot (dense) | RNN, shuffled transitions | 3 | -15.24 | -13.03 ± 1.03 | -21.08 | -4.49 | 291 |
 | Point-Wind (invented) | PEARL | 3 | -4.84 | -3.98 ± 0.18 | -20.39 | -3.38 | 148 |
-| Sparse Point-Robot | PEARL | 3 | 0.56 | 1.93 ± 1.01 | 0.00 | 13.38 | 304 |
+| Sparse Point-Robot | PEARL, context batch 1024 | 3 | 0.14 | 0.78 ± 0.56 | 0.00 | 13.38 | 1139 |
+| Sparse Point-Robot | PEARL | 3 | 0.43 | 2.93 ± 1.70 | 0.00 | 13.38 | 1298 |
